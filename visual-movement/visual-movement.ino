@@ -47,7 +47,7 @@ void loop() {
     // Read the values from the pressure sensors
     toeValue = analogRead(toePin);
     // Print the results 
-    Serial.println("Hello World!");
+    Serial.println(toeValue);
     delay(50);
     }
 }
