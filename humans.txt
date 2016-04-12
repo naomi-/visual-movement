@@ -1,0 +1,10 @@
+Contributers:
+
+Naomi Touchet (@rhythmicriddler)
+
+
+Thanks to the following helpful sources:
+
+https://learn.sparkfun.com/tutorials/connecting-arduino-to-processing (Helped me get started with connecting Arduino and Processing)
+
+
