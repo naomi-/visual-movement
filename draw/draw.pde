@@ -1,8 +1,8 @@
 import processing.serial.*;
 
 Serial myPort; //Create object from Serial class
-String valString; // Data received from the serial port
-int val;
+//String valString; // Data received from the serial port
+String val;
 
 // Since we're doing serial handshaking, we need to check if we've heard from the microcontroller
 boolean firstContact = false;
@@ -16,11 +16,7 @@ void setup(){
 }
 
 void draw(){
-    fill(0,12);
-    rect(0,0,width,height);
-    fill(255);
-    ellipse(width/2, val, 50,50);
-    println("val= " + val);
+  ellipse(mouseX, mouseY, 80, 80);
   if(myPort.available()>0){
     serialEvent(myPort);
   }
@@ -28,25 +24,24 @@ void draw(){
 
 void serialEvent(Serial myPort){
   // Put the incoming data into a String, the '\n' is our end delimiter indicating the end of a complete packet
-  valString = myPort.readStringUntil('\n');
+  val = myPort.readStringUntil('\n');
   // Make sure our data isn't empty before continuing
-  if(valString != null){
-    val = Integer.parseInt(valString);
+  if(val != null){
     // Trim whitespace and formatting characters (like carriage return)
-    //val = trim(val);
-    //println(val);
+    val = trim(val);
+    println(val);
     
     // Look for our 'A' string to start the handshake
     // If it's there, clear the buffer and send a request for data
     if(firstContact == false){
-      if(valString.equals("A")){
+      if(val.equals("A")){
         myPort.clear();
         firstContact = true;
         myPort.write("A");
         println("contact");
       }
     } else { // If we've already established contact, keep getting and parsing data
-      println(valString);
+      println(val);
       
       if(mousePressed==true){ // If we clicked in the window
         myPort.write('1'); // Send a 1
