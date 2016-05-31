@@ -1,57 +1,99 @@
-#include <Adafruit_NeoPixel.h>  // This lets us communicate with the NeoPixel on Flora (not using this yet)
+//!! This should let us use bluetooth to get Serial port info
+#include <Arduino.h>
+#include <SPI.h>
+#if not defined (_VARIANT_ARDUINO_DUE_X_) && not defined (_VARIANT_ARDUINO_ZERO_)
+  #include <SoftwareSerial.h>
+#endif
+
+#include "Adafruit_BLE.h"
+#include "Adafruit_BluefruitLE_SPI.h"
+#include "Adafruit_BluefruitLE_UART.h"
+
+#include "bluefruitConfig.h"
+
+Adafruit_BluefruitLE_SPI ble(BLUEFRUIT_SPI_CS, BLUEFRUIT_SPI_IRQ, BLUEFRUIT_SPI_RST);
+
+    #define FACTORYRESET_ENABLE         1
+    #define MINIMUM_FIRMWARE_VERSION    "0.6.6"
+    #define MODE_LED_BEHAVIOUR          "MODE"
+
+// A small helper
+void error(const __FlashStringHelper*err) {
+  Serial.println(err);
+  while (1);
+}
+
+// end !! ---------------
 
 char val;   // Data reecived from the serial port
-int ledPin = 7; // Set the pin to digital I/O 7
-boolean ledState = LOW; // To toggle our LED
 
 // For pressure input
 const int toePin = A9; // Analog input pin for toe pressure sensor
-const int heelPin = A10; // Analog input pin for heel pressure sensor
 int toeValue = 0; // Value read from toe sensor
-int heelValue = 0; // Value read from heel sensor
-
 
 void setup() {
-  // put your setup code here, to run once:
-  // Set pin modes
-  pinMode(ledPin, OUTPUT); // Set pin as OUTPUT
   pinMode(toePin, INPUT_PULLUP); // Set pin as INPUT
-  pinMode(heelPin, INPUT_PULLUP); // Set pin as INPUT
-  Serial.begin(9600); // Initialize serial communications at a 9600 baud rate
-  establishContact(); // Send a byte to establish contact until receiver responds
+  
+  Serial.begin(115200); //Initializes Serial communication at a 115200 baud rate
+  
+  if(!ble.begin(VERBOSE_MODE)){
+    error(F("Couldn't find Bluefruit, make sure it's in command mode and check wiring."));
+  }
+  ble.echo(false); //Disables command echo from Bluefruit
+  ble.info(); //Prints Bluefruit information
+  //ble.begin(115200); //Initializes bluetooth communication
+  //Serial.println("Serial initialized");
+  //establishContact(); // Send a byte to establish contact until receiver responds
+  ble.verbose(false);
+  
+  while(! ble.isConnected()){
+    delay(500);
+  }
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-
-  // Read the values from the pressure sensors
-  // toeValue = analogRead(toePin);
-  // heelValue = analogRead(heelPin);
-  // Print the results to the serial monitor
-  // Serial.println("toe");
-//  Serial.println(toeValue);
-//  Serial.println("heel");
-//  Serial.println(heelValue);
-//  delay(50);
+  ble.println("AT+BLEUARTRX");
+  ble.readline();
+  if (strcmp(ble.buffer, "OK")==0) {
+    //no data
+    return;  
+  }
+  //if some data was found, it's in the buffer
+  Serial.print(F("[Recv] "));
+  Serial.println(ble.buffer);
+  ble.waitForOK();
   
-  if (Serial.available() > 0) { // If data is available to read,
-    val = Serial.read(); // Read it and store it in val
+  // Read the values from the pressure sensors
+  //toeValue = analogRead(toePin);
+  // Print the results to the Serial communication
+  //Serial.println(toeValue);
+  //delay(50);
 
-    if(val == '1') { // If we get a 1 
-       ledState = !ledState; // Flip the ledState
-       digitalWrite(ledPin, ledState); 
-    }
-    delay(100);
-  } 
-    else {
-    // Read the values from the pressure sensors
-    toeValue = analogRead(toePin);
-    // Print the results 
-    Serial.println(toeValue);
-    delay(50);
-    }
 }
 
+//this checks for user input via the Serial Monitor
+bool getUserInput(char buffer[], uint8_t maxSize)
+{
+  // timeout in 100 milliseconds
+  TimeoutTimer timeout(100);
+
+  memset(buffer, 0, maxSize);
+  while( (!Serial.available()) && !timeout.expired() ) { delay(1); }
+
+  if ( timeout.expired() ) return false;
+
+  delay(2);
+  uint8_t count=0;
+  do
+  {
+    count += Serial.readBytes(buffer+count, maxSize);
+    delay(2);
+  } while( (count < maxSize) && (Serial.available()) );
+
+  return true;
+}
+
+// This is an old method
 void establishContact() {
   while(Serial.available() <= 0) {
     Serial.println("A"); // Send a capital A

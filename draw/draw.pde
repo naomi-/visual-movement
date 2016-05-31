@@ -1,5 +1,6 @@
 import processing.serial.*;
 
+
 Serial myPort; // Create object from Serial class
 String val; // Data received from the Serial port
 float toeValue;
@@ -9,7 +10,7 @@ boolean firstContact = false;
 
 void setup(){
   size(500,500); // Make our canvas
-  String portName = Serial.list()[0]; // This connects to COM4 on my computer
+  String portName = Serial.list()[0]; // 0 connects to COM4 on my computer
   myPort = new Serial(this, portName, 9600);
   myPort.bufferUntil('\n');
 
